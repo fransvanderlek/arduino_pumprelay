@@ -4,21 +4,57 @@ using the digitalWrite to set/unset relay pins.
 
 int setPin = 12;
 int unsetPin = 13;
+int buttonReadPin = 2; //need GPIO 2, as it has pull up resistor
+bool pumping = false;
 
 void setup() {
+	Serial.begin(9600);
 	pinMode(setPin, OUTPUT);
 	pinMode(unsetPin, OUTPUT);
 
 	digitalWrite(setPin, LOW);
 	digitalWrite(unsetPin, LOW);
 
+	pinMode( buttonReadPin, INPUT_PULLUP); //default will be HIGH
+
 }
 
 void loop() {
-	pumpOn();
-	delay(3000);
-	pumpOff();
-	delay(5000);
+
+	delay(100);
+	//when the button is pressed, we want the pump to go on
+	//pump should keep going as long as button is being pressed
+	//therefore then the button is released, pumping should stop.
+
+	//once on, the pump keeps going until it is told to stop, since we use a latching relay
+	//we introduce the 'pumping' variable to keep track of this state
+	//and avoid setting/unsetting the relay unnecesserily.
+
+	if ( buttonPressed()  ){
+
+		Serial.println("button is being pressed");
+		if ( !pumping ){
+			Serial.println("turning pump on");
+			pumpOn();
+		}
+		//if already pumping, do nothing
+	}
+
+
+	if ( !buttonPressed() ){
+		Serial.println("button is not being pressed");
+		if ( pumping){
+			Serial.println("turning pump off");
+			pumpOff();
+		}
+	}
+}
+
+bool buttonPressed(){
+	return digitalRead(buttonReadPin) == LOW;
+	//since default is HIGH, then HIGH means the button is not pressed
+	//and therefore LOW means the buttons was pressed ( button is connected to GND )
+
 }
 
 
@@ -30,10 +66,12 @@ void activateRelayPin(int pin){
 
 void pumpOn(){
 	activateRelayPin( setPin);
+	pumping = true;
 }
 
 void pumpOff(){
 	activateRelayPin( unsetPin);
+	pumping = false;
 
 }
 

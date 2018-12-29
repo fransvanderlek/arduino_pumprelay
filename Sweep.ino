@@ -8,7 +8,6 @@ int buttonReadPin = 2; //need GPIO 2, as it has pull up resistor
 bool pumping = false;
 
 void setup() {
-	Serial.begin(9600);
 	pinMode(setPin, OUTPUT);
 	pinMode(unsetPin, OUTPUT);
 
@@ -32,9 +31,7 @@ void loop() {
 
 	if ( buttonPressed()  ){
 
-		Serial.println("button is being pressed");
 		if ( !pumping ){
-			Serial.println("turning pump on");
 			pumpOn();
 		}
 		//if already pumping, do nothing
@@ -42,9 +39,7 @@ void loop() {
 
 
 	if ( !buttonPressed() ){
-		Serial.println("button is not being pressed");
 		if ( pumping){
-			Serial.println("turning pump off");
 			pumpOff();
 		}
 	}

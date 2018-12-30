@@ -1,11 +1,15 @@
 /* Sweep
-using the digitalWrite to set/unset relay pins.
+ using the digitalWrite to set/unset relay pins.
  */
 
 int setPin = 12;
 int unsetPin = 13;
 int buttonReadPin = 2; //need GPIO 2, as it has pull up resistor
-bool pumping = false;
+bool watering = false;
+int moistureSensorPin = A0;
+
+int moistureMin = -1;
+int moistureMax = -1;
 
 void setup() {
 	pinMode(setPin, OUTPUT);
@@ -14,63 +18,98 @@ void setup() {
 	digitalWrite(setPin, LOW);
 	digitalWrite(unsetPin, LOW);
 
-	pinMode( buttonReadPin, INPUT_PULLUP); //default will be HIGH
+	pinMode(buttonReadPin, INPUT_PULLUP); //default will be HIGH
 
 }
 
+/*
+ *
+ when the button is pressed, we want the pump to go on
+ pump should keep going as long as button is being pressed
+ therefore then the button is released, pumping should stop.
+
+ once on, the pump keeps going until it is told to stop, since we use a latching relay
+ we introduce the 'pumping' variable to keep track of this state
+ and avoid setting/unsetting the relay unnecesserily.
+
+ * */
 void loop() {
 
 	delay(100);
-	//when the button is pressed, we want the pump to go on
-	//pump should keep going as long as button is being pressed
-	//therefore then the button is released, pumping should stop.
 
-	//once on, the pump keeps going until it is told to stop, since we use a latching relay
-	//we introduce the 'pumping' variable to keep track of this state
-	//and avoid setting/unsetting the relay unnecesserily.
+	if (buttonPressed()) {
 
-	if ( buttonPressed()  ){
+		startWatering();
+		storeMoistureMin();
 
-		if ( !pumping ){
-			pumpOn();
+		while (buttonPressed()) {
+			delay(100);
+
 		}
-		//if already pumping, do nothing
+
+		stopWatering();
+		storeMoistureMax();
 	}
 
+	if (wateringLearned() && soilTooDry()) {
+		startWatering();
 
-	if ( !buttonPressed() ){
-		if ( pumping){
-			pumpOff();
+		//keep on watering until moisturized level reached
+		while (!soilMoisturized()) {
+			delay(100);
+
 		}
+		stopWatering();
 	}
 }
 
-bool buttonPressed(){
+bool buttonPressed() {
 	return digitalRead(buttonReadPin) == LOW;
-	//since default is HIGH, then HIGH means the button is not pressed
-	//and therefore LOW means the buttons was pressed ( button is connected to GND )
+//since default is HIGH, then HIGH means the button is not pressed
+//and therefore LOW means the buttons was pressed ( button is connected to GND )
 
 }
 
-
-void activateRelayPin(int pin){
+void activateRelayPin(int pin) {
 	digitalWrite(pin, HIGH);
 	delay(10);
 	digitalWrite(pin, LOW);
 }
 
-void pumpOn(){
-	activateRelayPin( setPin);
-	pumping = true;
+void startWatering() {
+	activateRelayPin(setPin);
+	watering = true;
 }
 
-void pumpOff(){
-	activateRelayPin( unsetPin);
-	pumping = false;
+void stopWatering() {
+	activateRelayPin(unsetPin);
+	watering = false;
 
 }
 
+void storeMoistureMin() {
+	moistureMin = analogRead(moistureSensorPin);
+}
 
+void storeMoistureMax() {
+	moistureMax = analogRead(moistureSensorPin);
 
+}
 
+void resetMoistureLevels() {
+	moistureMin = -1;
+	moistureMax = -1;
+}
+
+bool soilTooDry() {
+	return analogRead(moistureSensorPin) < moistureMin;
+}
+
+bool soilMoisturized() {
+	return analogRead(moistureSensorPin) >= moistureMax;
+}
+
+bool wateringLearned() {
+	return moistureMin > 0 && moistureMax > 0;
+}
 

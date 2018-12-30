@@ -91,7 +91,7 @@ bool soilTooDry() {
 }
 
 bool soilNotMoisturized() {
-	return analogRead(moistureSensorPin) >= moistureMax;
+	return analogRead(moistureSensorPin) <= moistureMax;
 }
 
 bool wateringLearned() {

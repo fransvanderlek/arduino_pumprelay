@@ -39,12 +39,12 @@ void loop() {
 
 	if (buttonPressed()) {
 		storeMoistureMin();
-		giveWaterAsLongAs( buttonPressed );
+		giveWaterWhile( buttonPressed );
 		storeMoistureMax();
 	}
 
 	if (wateringLearned() && soilTooDry()) {
-		giveWaterAsLongAs ( soilNotMoisturized );
+		giveWaterWhile ( soilNotMoisturized );
 	}
 }
 
@@ -98,10 +98,9 @@ bool wateringLearned() {
 	return moistureMin > 0 && moistureMax > 0;
 }
 
-void giveWaterAsLongAs( bool (*keepWatering)(void)){
+void giveWaterWhile( bool (*keepWatering)(void)){
 	startWatering();
 
-	//keep on watering until moisturized level reached
 	while (keepWatering()) {
 		delay(100);
 

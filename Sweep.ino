@@ -38,28 +38,13 @@ void loop() {
 	delay(100);
 
 	if (buttonPressed()) {
-
-		startWatering();
 		storeMoistureMin();
-
-		while (buttonPressed()) {
-			delay(100);
-
-		}
-
-		stopWatering();
+		giveWaterAsLongAs( buttonPressed );
 		storeMoistureMax();
 	}
 
 	if (wateringLearned() && soilTooDry()) {
-		startWatering();
-
-		//keep on watering until moisturized level reached
-		while (!soilMoisturized()) {
-			delay(100);
-
-		}
-		stopWatering();
+		giveWaterAsLongAs ( soilNotMoisturized );
 	}
 }
 
@@ -105,11 +90,22 @@ bool soilTooDry() {
 	return analogRead(moistureSensorPin) < moistureMin;
 }
 
-bool soilMoisturized() {
+bool soilNotMoisturized() {
 	return analogRead(moistureSensorPin) >= moistureMax;
 }
 
 bool wateringLearned() {
 	return moistureMin > 0 && moistureMax > 0;
+}
+
+void giveWaterAsLongAs( bool (*keepWatering)(void)){
+	startWatering();
+
+	//keep on watering until moisturized level reached
+	while (keepWatering()) {
+		delay(100);
+
+	}
+	stopWatering();
 }
 

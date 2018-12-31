@@ -12,11 +12,15 @@ int moistureMin = -1;
 int moistureMax = -1;
 
 void setup() {
+
+	Serial.begin(9600);
 	pinMode(setPin, OUTPUT);
 	pinMode(unsetPin, OUTPUT);
 
 	digitalWrite(setPin, LOW);
 	digitalWrite(unsetPin, LOW);
+
+	activateRelayPin(unsetPin);
 
 	pinMode(buttonReadPin, INPUT_PULLUP); //default will be HIGH
 
@@ -36,6 +40,9 @@ void setup() {
 void loop() {
 
 	delay(100);
+
+	Serial.println( analogRead(A0));
+
 
 	if (buttonPressed()) {
 		storeMoistureMin();
@@ -64,20 +71,26 @@ void activateRelayPin(int pin) {
 void startWatering() {
 	activateRelayPin(setPin);
 	watering = true;
+	Serial.println("Watering");
 }
 
 void stopWatering() {
 	activateRelayPin(unsetPin);
 	watering = false;
+	Serial.println("not watering");
 
 }
 
 void storeMoistureMin() {
 	moistureMin = analogRead(moistureSensorPin);
+	Serial.println("Moisture Min set to: ");
+	Serial.println(moistureMin);
 }
 
 void storeMoistureMax() {
 	moistureMax = analogRead(moistureSensorPin);
+	Serial.println("Moisture Max set to: ");
+	Serial.println(moistureMax);
 
 }
 

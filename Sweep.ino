@@ -9,11 +9,14 @@ bool watering = false;
 int moistureSensorPin = A0;
 
 int moistureMin = -1;
-int moistureMax = -1;
+long pumpIntervalMillis = -1;
+
+long wateringStartTime = -1;
+
 
 void setup() {
 
-	Serial.begin(9600);
+	Serial.begin(115200);
 	pinMode(setPin, OUTPUT);
 	pinMode(unsetPin, OUTPUT);
 
@@ -39,19 +42,25 @@ void setup() {
  * */
 void loop() {
 
-	delay(100);
+	delay(1000);
 
+	Serial.println("##loop");
+    Serial.print("Moisture at: ");
 	Serial.println( analogRead(A0));
-
 
 	if (buttonPressed()) {
 		storeMoistureMin();
+		long timeButtonPressed = millis();
 		giveWaterWhile( buttonPressed );
-		storeMoistureMax();
+		pumpIntervalMillis = millis() - timeButtonPressed;
+
+		Serial.print("pumpIntervalMillis set to ");
+		Serial.println( pumpIntervalMillis);
 	}
 
 	if (wateringLearned() && soilTooDry()) {
-		giveWaterWhile ( soilNotMoisturized );
+		wateringStartTime = millis();
+		giveWaterWhile ( pumpTimeNotFinished );
 	}
 }
 
@@ -71,51 +80,47 @@ void activateRelayPin(int pin) {
 void startWatering() {
 	activateRelayPin(setPin);
 	watering = true;
-	Serial.println("Watering");
+	Serial.print("##Watering at time ");
+	Serial.println(millis());
 }
 
 void stopWatering() {
 	activateRelayPin(unsetPin);
 	watering = false;
-	Serial.println("not watering");
+	Serial.print("##stop watering at time ");
+	Serial.println(millis());
 
 }
 
 void storeMoistureMin() {
 	moistureMin = analogRead(moistureSensorPin);
-	Serial.println("Moisture Min set to: ");
+	Serial.print("Moisture Min set to: ");
 	Serial.println(moistureMin);
 }
 
-void storeMoistureMax() {
-	moistureMax = analogRead(moistureSensorPin);
-	Serial.println("Moisture Max set to: ");
-	Serial.println(moistureMax);
 
-}
-
-void resetMoistureLevels() {
-	moistureMin = -1;
-	moistureMax = -1;
-}
 
 bool soilTooDry() {
-	return analogRead(moistureSensorPin) < moistureMin;
+	Serial.print("##Soil too dry");
+	Serial.println( analogRead(moistureSensorPin) <= moistureMin);
+	return analogRead(moistureSensorPin) <= moistureMin;
 }
 
-bool soilNotMoisturized() {
-	return analogRead(moistureSensorPin) <= moistureMax;
+
+bool pumpTimeNotFinished(){
+	return (millis()-wateringStartTime) <= pumpIntervalMillis;
 }
 
 bool wateringLearned() {
-	return moistureMin > 0 && moistureMax > 0;
+
+	return (moistureMin >= 0) && (pumpIntervalMillis >=0) ;
 }
 
 void giveWaterWhile( bool (*keepWatering)(void)){
 	startWatering();
 
 	while (keepWatering()) {
-		delay(100);
+		delay(1000);
 
 	}
 	stopWatering();
